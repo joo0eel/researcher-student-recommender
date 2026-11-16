@@ -251,18 +251,39 @@ def evaluate_ranking(data, models):
         print()
 
 
+_RECOMMENDER_CACHE = {}
+
+
+def get_recommender_assets():
+    """Returns cached faculty metadata, vectorizers, and profile matrices."""
+    if "loaded" not in _RECOMMENDER_CACHE:
+        faculty_df = pd.read_csv(f"{DATA_DIR}/faculty.csv")
+        vectorizers = pickle.load(open(f"{DATA_DIR}/artifacts/vectorizers.pkl", "rb"))
+        faculty_matrices = {k: sparse.load_npz(f"{DATA_DIR}/artifacts/fac_{k}.npz") for k in vectorizers}
+        model, _ = joblib.load(f"{DATA_DIR}/model.joblib")
+        _RECOMMENDER_CACHE["faculty_df"] = faculty_df
+        _RECOMMENDER_CACHE["vectorizers"] = vectorizers
+        _RECOMMENDER_CACHE["faculty_matrices"] = faculty_matrices
+        _RECOMMENDER_CACHE["model"] = model
+        _RECOMMENDER_CACHE["loaded"] = True
+
+    return (
+        _RECOMMENDER_CACHE["faculty_df"],
+        _RECOMMENDER_CACHE["vectorizers"],
+        _RECOMMENDER_CACHE["faculty_matrices"],
+        _RECOMMENDER_CACHE["model"],
+    )
+
+
 def recommend_faculty(query_text: str, model=None, top_k: int = 5):
     """
     Given a free-text research interest or query, computes similarity features,
     applies the supervised model to predict collaboration probabilities,
     and returns top-K ranked faculty recommendations.
     """
+    faculty_df, vectorizers, faculty_matrices, cached_model = get_recommender_assets()
     if model is None:
-        model, _ = joblib.load(f"{DATA_DIR}/model.joblib")
-
-    faculty_df = pd.read_csv(f"{DATA_DIR}/faculty.csv")
-    vectorizers = pickle.load(open(f"{DATA_DIR}/artifacts/vectorizers.pkl", "rb"))
-    faculty_matrices = {k: sparse.load_npz(f"{DATA_DIR}/artifacts/fac_{k}.npz") for k in vectorizers}
+        model = cached_model
 
     # Transform query through TF-IDF representations
     query_vectors = {k: vectorizers[k].transform([query_text]) for k in vectorizers}

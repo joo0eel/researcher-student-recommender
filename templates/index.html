@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusScholar — Supervised Faculty Recommender</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .gradient-hero {
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 40%),
+                  radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.08), transparent 40%),
+                  #f8fafc;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+  </style>
+</head>
+<body class="gradient-hero min-h-screen text-slate-800 flex flex-col antialiased">
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-slate-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-lg text-slate-900 tracking-tight flex items-center gap-2">
+            NexusScholar
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100">Supervised ML</span>
+          </span>
+          <p class="text-xs text-slate-500 hidden sm:block">Research Advisor & Collaboration Recommender</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
+        <button id="tab-recommender-btn" onclick="switchTab('recommender')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-slate-900">
+          Recommender
+        </button>
+        <button id="tab-insights-btn" onclick="switchTab('insights')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+          Model Insights
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <!-- ==================== TAB 1: RECOMMENDER ==================== -->
+    <div id="tab-recommender" class="space-y-8">
+      
+      <!-- Search Banner -->
+      <div class="glass-card rounded-3xl p-6 sm:p-10 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+        <div class="max-w-3xl">
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-3">
+            Find the Best <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Faculty Collaborators</span> for Your Research
+          </h1>
+          <p class="text-slate-600 text-sm sm:text-base leading-relaxed mb-6">
+            Enter your research interests, proposed thesis topic, or draft paper abstract. Our supervised Gradient Boosting link prediction model will calculate collaboration probability across 730+ faculty researchers.
+          </p>
+
+          <!-- Search Form -->
+          <form id="recommend-form" onsubmit="handleSearch(event)" class="space-y-4">
+            <div class="relative">
+              <textarea id="query-input" rows="3" required
+                placeholder="e.g. Deep learning and computer vision for plant disease detection using leaf image segmentation..."
+                class="w-full px-4 py-3.5 pl-12 rounded-2xl border border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-800 placeholder-slate-400 text-sm sm:text-base shadow-sm resize-none"></textarea>
+              <i data-lucide="sparkles" class="w-5 h-5 text-indigo-500 absolute left-4 top-4"></i>
+            </div>
+
+            <!-- Controls & Presets -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <label for="top-k-select" class="text-xs font-semibold text-slate-600">Results count:</label>
+                <select id="top-k-select" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 outline-none focus:border-indigo-500">
+                  <option value="5" selected>Top 5 Matches</option>
+                  <option value="10">Top 10 Matches</option>
+                  <option value="15">Top 15 Matches</option>
+                </select>
+              </div>
+
+              <button type="submit" id="search-btn"
+                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-blue-500 hover:to-indigo-500 transition-all">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span>Find Collaborators</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Quick Topic Pills -->
+          <div class="mt-6 pt-6 border-t border-slate-200/60">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2.5">Try sample topics:</span>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setQuery('machine learning for plant disease detection using image processing')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-medium border border-emerald-200 transition-colors">
+                🌿 Plant Disease & Agri-AI
+              </button>
+              <button onclick="setQuery('cloud computing and cyber security intrusion detection')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium border border-blue-200 transition-colors">
+                🔒 Cloud & Cyber Security
+              </button>
+              <button onclick="setQuery('deep learning for medical image segmentation and cancer detection')" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-medium border border-rose-200 transition-colors">
+                🩺 Healthcare & Radiology AI
+              </button>
+              <button onclick="setQuery('natural language processing sentiment analysis and large language models')" class="px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-medium border border-purple-200 transition-colors">
+                💬 NLP & Transformers
+              </button>
+              <button onclick="setQuery('autonomous vehicle navigation using reinforcement learning and sensors')" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-medium border border-amber-200 transition-colors">
+                🚗 Autonomous Vehicles & Robotics
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div id="results-container" class="space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="user-check" class="w-5 h-5 text-indigo-600"></i>
+            <span>Recommended Faculty Researchers</span>
+          </h2>
+          <span id="results-count-badge" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full hidden"></span>
+        </div>
+
+        <!-- Initial Placeholder State -->
+        <div id="placeholder-state" class="glass-card rounded-2xl p-12 text-center">
+          <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-4">
+            <i data-lucide="compass" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-slate-800 font-semibold text-base mb-1">No Query Submitted Yet</h3>
+          <p class="text-slate-500 text-sm max-w-md mx-auto">
+            Type your research interests above or click one of the suggested sample topics to get supervised collaboration matches.
+          </p>
+        </div>
+
+        <!-- Loading Skeleton -->
+        <div id="loading-state" class="hidden space-y-4">
+          <div class="glass-card rounded-2xl p-6 animate-pulse space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="h-5 bg-slate-200 rounded w-1/3"></div>
+              <div class="h-6 bg-slate-200 rounded-full w-24"></div>
+            </div>
+            <div class="h-3 bg-slate-200 rounded w-full"></div>
+            <div class="h-3 bg-slate-200 rounded w-2/3"></div>
+          </div>
+          <div class="glass-card rounded-2xl p-6 animate-pulse space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="h-5 bg-slate-200 rounded w-1/3"></div>
+              <div class="h-6 bg-slate-200 rounded-full w-24"></div>
+            </div>
+            <div class="h-3 bg-slate-200 rounded w-full"></div>
+            <div class="h-3 bg-slate-200 rounded w-2/3"></div>
+          </div>
+        </div>
+
+        <!-- Cards List -->
+        <div id="cards-list" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: MODEL INSIGHTS ==================== -->
+    <div id="tab-insights" class="hidden space-y-8">
+      
+      <!-- Overview Card -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm">
+        <h2 class="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i data-lucide="brain-circuit" class="w-6 h-6 text-indigo-600"></i>
+          <span>Supervised Learning Architecture & Formulation</span>
+        </h2>
+        <p class="text-slate-600 text-sm leading-relaxed mb-6">
+          The recommender uses a strictly supervised machine learning formulation to predict collaboration probabilities: 
+          $\hat{y} = P(Y = 1 \mid \mathbf{x})$. Training is conducted strictly on labeled student-faculty pairs where positive labels indicate confirmed co-authorship.
+        </p>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Labeled Pairs</span>
+            <span class="text-2xl font-extrabold text-slate-900">6,210</span>
+            <span class="text-[11px] text-slate-500 block mt-1">1,553 pos / 4,657 neg</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Faculty Index</span>
+            <span class="text-2xl font-extrabold text-slate-900">734</span>
+            <span class="text-[11px] text-slate-500 block mt-1">≥5 papers per faculty</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Student Proxies</span>
+            <span class="text-2xl font-extrabold text-slate-900">605</span>
+            <span class="text-[11px] text-slate-500 block mt-1">Junior researchers (2-4 papers)</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Best Test AUC</span>
+            <span class="text-2xl font-extrabold text-indigo-600">0.739</span>
+            <span class="text-[11px] text-slate-500 block mt-1">Gradient Boosting</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Importances & Model Comparison Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Feature Importances Card -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-600"></i>
+            <span>Feature Importances (Gradient Boosting)</span>
+          </h3>
+          <p class="text-xs text-slate-500">
+            Relative contribution of each supervised feature in determining collaboration probability.
+          </p>
+
+          <div class="space-y-3 pt-2" id="feature-importances-list">
+            <!-- Items rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Model Benchmark Table Card -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+            <span>Supervised Model Benchmark (Test Set)</span>
+          </h3>
+          <p class="text-xs text-slate-500">
+            Evaluated on 990 held-out student-faculty pairs from completely unseen test students.
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 text-slate-600 uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2.5 rounded-l-lg">Model</th>
+                  <th class="px-3 py-2.5">Accuracy</th>
+                  <th class="px-3 py-2.5">Precision</th>
+                  <th class="px-3 py-2.5">Recall</th>
+                  <th class="px-3 py-2.5">F1</th>
+                  <th class="px-3 py-2.5 rounded-r-lg">ROC-AUC</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                <tr>
+                  <td class="px-3 py-3 font-semibold text-slate-900">Logistic Regression</td>
+                  <td class="px-3 py-3">64.9%</td>
+                  <td class="px-3 py-3">0.357</td>
+                  <td class="px-3 py-3">0.496</td>
+                  <td class="px-3 py-3">0.415</td>
+                  <td class="px-3 py-3">0.661</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-3 font-semibold text-slate-900">Random Forest</td>
+                  <td class="px-3 py-3">64.4%</td>
+                  <td class="px-3 py-3">0.388</td>
+                  <td class="px-3 py-3 font-bold text-indigo-600">0.730</td>
+                  <td class="px-3 py-3 font-bold text-indigo-600">0.507</td>
+                  <td class="px-3 py-3">0.724</td>
+                </tr>
+                <tr class="bg-indigo-50/50">
+                  <td class="px-3 py-3 font-bold text-indigo-900 flex items-center gap-1.5">
+                    Gradient Boosting
+                    <span class="text-[9px] bg-indigo-600 text-white font-extrabold px-1.5 py-0.5 rounded">BEST</span>
+                  </td>
+                  <td class="px-3 py-3 font-bold text-indigo-900">76.5%</td>
+                  <td class="px-3 py-3 font-bold text-indigo-900">0.586</td>
+                  <td class="px-3 py-3">0.206</td>
+                  <td class="px-3 py-3">0.305</td>
+                  <td class="px-3 py-3 font-bold text-indigo-900">0.739</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Unseen Student Ranking Metrics:</h4>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                <span class="text-slate-500 block text-[11px]">Hit@5</span>
+                <span class="text-sm font-extrabold text-slate-800">23.1%</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                <span class="text-slate-500 block text-[11px]">Hit@10</span>
+                <span class="text-sm font-extrabold text-slate-800">36.3%</span>
+              </div>
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                <span class="text-slate-500 block text-[11px]">MRR</span>
+                <span class="text-sm font-extrabold text-slate-800">0.123</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white/50 backdrop-blur-sm py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-800">NexusScholar</span>
+        <span>•</span>
+        <span>Supervised ML Collaboration Engine</span>
+      </div>
+      <div>
+        <span>Trained on 6,210 labeled pairs across 734 faculty profiles</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script for UI Logic -->
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Tab Switching
+    function switchTab(tab) {
+      const recTab = document.getElementById('tab-recommender');
+      const insTab = document.getElementById('tab-insights');
+      const recBtn = document.getElementById('tab-recommender-btn');
+      const insBtn = document.getElementById('tab-insights-btn');
+
+      if (tab === 'recommender') {
+        recTab.classList.remove('hidden');
+        insTab.classList.add('hidden');
+        recBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-slate-900";
+        insBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+      } else {
+        recTab.classList.add('hidden');
+        insTab.classList.remove('hidden');
+        recBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900";
+        insBtn.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-slate-900";
+      }
+      lucide.createIcons();
+    }
+
+    // Pre-fill query input
+    function setQuery(text) {
+      const input = document.getElementById('query-input');
+      input.value = text;
+      input.focus();
+      document.getElementById('recommend-form').dispatchEvent(new Event('submit'));
+    }
+
+    // Handle Search Submission
+    async function handleSearch(e) {
+      e.preventDefault();
+      const query = document.getElementById('query-input').value.trim();
+      const topK = document.getElementById('top-k-select').value;
+      if (!query) return;
+
+      const placeholder = document.getElementById('placeholder-state');
+      const loading = document.getElementById('loading-state');
+      const cardsList = document.getElementById('cards-list');
+      const searchBtn = document.getElementById('search-btn');
+      const countBadge = document.getElementById('results-count-badge');
+
+      placeholder.classList.add('hidden');
+      cardsList.innerHTML = '';
+      loading.classList.remove('hidden');
+      searchBtn.disabled = true;
+      searchBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+      try {
+        const response = await fetch('/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query, top_k: parseInt(topK) })
+        });
+        const data = await response.json();
+
+        loading.classList.add('hidden');
+        searchBtn.disabled = false;
+        searchBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+
+        if (data.results && data.results.length > 0) {
+          countBadge.innerText = `${data.results.length} Matches Found`;
+          countBadge.classList.remove('hidden');
+          renderCards(data.results);
+        } else {
+          cardsList.innerHTML = `
+            <div class="glass-card rounded-2xl p-8 text-center text-slate-500">
+              No faculty matches found for this query. Try broader keywords.
+            </div>
+          `;
+        }
+      } catch (err) {
+        loading.classList.add('hidden');
+        searchBtn.disabled = false;
+        searchBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        cardsList.innerHTML = `
+          <div class="glass-card rounded-2xl p-6 text-center text-red-600 bg-red-50 border border-red-200">
+            Error fetching recommendations: ${err.message}
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // Render Faculty Result Cards
+    function renderCards(results) {
+      const cardsList = document.getElementById('cards-list');
+      cardsList.innerHTML = results.map(rec => {
+        const prob = Math.round(rec.score * 100);
+        let barColor = 'bg-indigo-600';
+        let badgeBg = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+        if (prob >= 80) {
+          barColor = 'bg-emerald-500';
+          badgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        } else if (prob >= 70) {
+          barColor = 'bg-blue-500';
+          badgeBg = 'bg-blue-50 text-blue-700 border-blue-200';
+        }
+
+        return `
+          <div class="glass-card rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all border border-slate-200/90 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-xl bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center shadow">
+                  #${rec.rank}
+                </span>
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    ${rec.faculty_name}
+                    <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">${rec.faculty_id}</span>
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Probability Pill -->
+              <div class="flex items-center gap-3 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/80 w-fit">
+                <div class="text-right">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Collab Probability</span>
+                  <span class="text-sm font-extrabold text-slate-900">${prob}%</span>
+                </div>
+                <div class="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${prob}%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bullet Reasons -->
+            <div class="space-y-1.5 pt-1 text-xs text-slate-600">
+              ${rec.reasons.map(r => `
+                <div class="flex items-start gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0"></i>
+                  <span>${r}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render Feature Importances
+    const features = [
+      { name: "Topic Keywords Similarity (sim_topics)", weight: 27.3 },
+      { name: "Full-Text Profile Similarity (sim_text)", weight: 23.1 },
+      { name: "Publication Titles Similarity (sim_titles)", weight: 20.4 },
+      { name: "Faculty Total Citations (fac_total_citations)", weight: 7.5 },
+      { name: "Faculty Average Citations (fac_avg_citations)", weight: 7.2 },
+      { name: "Faculty Paper Count (fac_n_papers)", weight: 7.2 },
+      { name: "Recent Papers Count [2024+] (fac_recent_papers)", weight: 5.0 },
+      { name: "Student Paper Count (stu_n_papers)", weight: 2.3 }
+    ];
+
+    const featList = document.getElementById('feature-importances-list');
+    featList.innerHTML = features.map(f => `
+      <div>
+        <div class="flex justify-between text-xs font-medium text-slate-700 mb-1">
+          <span>${f.name}</span>
+          <span class="font-bold text-slate-900">${f.weight}%</span>
+        </div>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full" style="width: ${f.weight * 3.5}%"></div>
+        </div>
+      </div>
+    `).join('');
+  </script>
+</body>
+</html>

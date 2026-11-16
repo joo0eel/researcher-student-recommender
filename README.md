@@ -85,6 +85,10 @@ research ML/
 │   ├── model.joblib           # Trained supervised classification model
 │   └── artifacts/             # TF-IDF vectorizers and profile sparse matrices
 │
+├── templates/
+│   └── index.html             # Modern responsive web dashboard (Tailwind CSS)
+│
+├── app.py                     # Flask web server & REST API
 ├── collab_features.py         # Feature definitions and similarity utilities
 ├── train_recommender.py       # Supervised model training, evaluation & ranking
 ├── recommend.py               # Interactive / CLI recommendation tool
@@ -99,10 +103,29 @@ research ML/
 ### Prerequisites
 Install the required Python packages:
 ```bash
-pip install numpy pandas scipy scikit-learn joblib
+pip install numpy pandas scipy scikit-learn joblib flask
 ```
 
-### Train and Evaluate Supervised Models
+### Launch the Web UI (Recommended)
+Start the interactive NexusScholar web application:
+```bash
+python app.py
+```
+Then open your browser and navigate to:
+```
+http://127.0.0.1:5000
+```
+**Web UI Features:**
+- **Interactive Search**: Type research topics or click one of the quick topic pills.
+- **Real-time Supervised Ranking**: View predicted collaboration probabilities with visual progress indicators.
+- **Match Explanations**: Shared keywords, main research topics, and cited relevant publications.
+- **Model Insights Tab**: Live breakdown of dataset balance, feature importances, and model benchmark tables.
+
+---
+
+### Run via Command-Line / Terminal
+
+#### A. Train and Evaluate Supervised Models
 To train the supervised classifiers, evaluate performance on test data, and run ranking metrics:
 ```bash
 python train_recommender.py
@@ -113,7 +136,7 @@ You can also pass a query directly to train and recommend in one step:
 python train_recommender.py "deep learning for plant disease detection using image processing"
 ```
 
-### Recommend Faculty for a Student Query
+#### B. Quick Terminal Recommendation (Without Re-training)
 Use `recommend.py` to get instant recommendations using the pre-trained supervised model without re-training:
 ```bash
 python recommend.py "natural language processing and large language models"
