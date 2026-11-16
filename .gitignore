@@ -1,0 +1,7 @@
+__pycache__/
+*.pkl
+*.joblib
+*.npz
+.env
+.vscode/
+dataset/artifacts/
