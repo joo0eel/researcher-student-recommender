@@ -118,7 +118,10 @@ http://127.0.0.1:5000
 **Web UI Features:**
 - **Interactive Search**: Type research topics or click one of the quick topic pills.
 - **Real-time Supervised Ranking**: View predicted collaboration probabilities with visual progress indicators.
-- **Match Explanations**: Shared keywords, main research topics, and cited relevant publications.
+- **OpenAlex Open-Source Links & Past Works**:
+  - Direct links to each faculty member's open-access profile on [OpenAlex](https://openalex.org) to explore their complete publication history, open-access PDFs, citation charts, and co-authorship networks.
+  - Lists key past publications and citation counts for every matched researcher.
+- **Dedicated "OpenAlex Past Works" Directory Tab**: Search and browse all 734 faculty members by name, topic, or paper title with direct OpenAlex profile buttons and pagination.
 - **Model Insights Tab**: Live breakdown of dataset balance, feature importances, and model benchmark tables.
 
 ---
