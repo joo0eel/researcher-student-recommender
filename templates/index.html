@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexusScholar — Supervised Faculty Recommender</title>
+  <title>NexusScholar — Supervised Faculty Recommender & OpenAlex Knowledge Base</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts -->
@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     html {
-      font-size: 18px; /* Increases overall UI scale cleanly */
+      font-size: 18px; /* High-res legible baseline */
     }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
@@ -25,7 +25,7 @@
                   #f8fafc;
     }
     .glass-card {
-      background: rgba(255, 255, 255, 0.90);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(226, 232, 240, 0.9);
     }
@@ -34,7 +34,7 @@
 <body class="gradient-hero min-h-screen text-slate-800 flex flex-col antialiased">
 
   <!-- Navigation Bar -->
-  <header class="border-b border-slate-200/90 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+  <header class="border-b border-slate-200/90 bg-white/85 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
@@ -53,6 +53,10 @@
       <div class="flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200">
         <button id="tab-recommender-btn" onclick="switchTab('recommender')" class="px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-sm bg-white text-slate-900">
           Recommender
+        </button>
+        <button id="tab-openalex-btn" onclick="switchTab('openalex')" class="px-5 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="book-open" class="w-4 h-4 text-indigo-500"></i>
+          <span>OpenAlex Past Works</span>
         </button>
         <button id="tab-insights-btn" onclick="switchTab('insights')" class="px-5 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all text-slate-600 hover:text-slate-900">
           Model Insights
@@ -74,7 +78,7 @@
             Find the Best <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Faculty Collaborators</span>
           </h1>
           <p class="text-slate-600 text-base sm:text-xl leading-relaxed mb-8 max-w-4xl">
-            Enter your research interests, proposed thesis topic, or draft paper abstract. Our supervised Gradient Boosting link prediction model will calculate collaboration probability across 730+ faculty researchers.
+            Enter your research interests, proposed thesis topic, or draft paper abstract. Our supervised Gradient Boosting link prediction model will calculate collaboration probabilities across 730+ faculty researchers with direct links to their past works on OpenAlex.
           </p>
 
           <!-- Search Form -->
@@ -175,7 +179,67 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 2: MODEL INSIGHTS ==================== -->
+    <!-- ==================== TAB 2: OPENALEX WORKS & DIRECTORY ==================== -->
+    <div id="tab-openalex" class="hidden space-y-8">
+      
+      <!-- OpenAlex Knowledge Base Intro Card -->
+      <div class="glass-card rounded-3xl p-8 sm:p-12 shadow-sm border border-slate-200 relative overflow-hidden">
+        <div class="max-w-4xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
+            <i data-lucide="globe" class="w-4 h-4"></i>
+            <span>OpenAlex Open-Source Scientific Knowledge Graph</span>
+          </div>
+          <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-3">
+            Explore Faculty Past Works & Research Profiles
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base leading-relaxed mb-6">
+            <a href="https://openalex.org" target="_blank" rel="noopener noreferrer" class="font-bold text-indigo-600 underline hover:text-indigo-800">OpenAlex</a> is a fully open-source, non-profit catalog of global scientific papers, citations, researchers, and institutions. Every faculty researcher in this system is linked directly to their verified OpenAlex profile, enabling you to inspect their complete publication timeline, open-access PDFs, citation metrics, and co-authorship networks.
+          </p>
+
+          <!-- Search & Filter Controls -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-grow">
+              <input type="text" id="faculty-search-input" placeholder="Search faculty by name, topic (e.g. artificial intelligence), or paper title..."
+                oninput="debounceFacultySearch()"
+                class="w-full px-5 py-3.5 pl-12 rounded-2xl border border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 outline-none text-slate-800 placeholder-slate-400 text-sm sm:text-base shadow-sm">
+              <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4 top-4"></i>
+            </div>
+            <button onclick="loadFacultyDirectory(1)" class="px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Directory Stats & Pagination Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="library" class="w-5 h-5 text-indigo-600"></i>
+            <span>Faculty Research Profiles</span>
+          </h3>
+          <span id="faculty-total-count" class="text-xs sm:text-sm text-slate-500 font-medium">Loading faculty directory...</span>
+        </div>
+
+        <div id="faculty-pagination" class="flex items-center gap-2 self-start sm:self-auto">
+          <button id="prev-page-btn" onclick="changeFacultyPage(-1)" disabled class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">
+            Previous
+          </button>
+          <span id="page-indicator" class="text-xs font-bold text-slate-700 px-2">Page 1</span>
+          <button id="next-page-btn" onclick="changeFacultyPage(1)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- Faculty Directory Grid -->
+      <div id="faculty-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Faculty cards rendered via JS -->
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: MODEL INSIGHTS ==================== -->
     <div id="tab-insights" class="hidden space-y-10">
       
       <!-- Overview Card -->
@@ -323,7 +387,7 @@
         <span>Supervised ML Collaboration Engine</span>
       </div>
       <div>
-        <span>Trained on 6,210 labeled pairs across 734 faculty profiles</span>
+        <span>Linked with OpenAlex Open-Source Academic Knowledge Graph</span>
       </div>
     </div>
   </footer>
@@ -333,23 +397,41 @@
     // Initialize Lucide icons
     lucide.createIcons();
 
+    let currentFacultyPage = 1;
+    let facultySearchTimeout = null;
+
     // Tab Switching
     function switchTab(tab) {
       const recTab = document.getElementById('tab-recommender');
+      const openalexTab = document.getElementById('tab-openalex');
       const insTab = document.getElementById('tab-insights');
+
       const recBtn = document.getElementById('tab-recommender-btn');
+      const openalexBtn = document.getElementById('tab-openalex-btn');
       const insBtn = document.getElementById('tab-insights-btn');
+
+      const activeClass = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-sm bg-white text-slate-900";
+      const inactiveClass = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all text-slate-600 hover:text-slate-900";
+
+      // Hide all tabs
+      recTab.classList.add('hidden');
+      openalexTab.classList.add('hidden');
+      insTab.classList.add('hidden');
+
+      recBtn.className = inactiveClass;
+      openalexBtn.className = inactiveClass;
+      insBtn.className = inactiveClass;
 
       if (tab === 'recommender') {
         recTab.classList.remove('hidden');
-        insTab.classList.add('hidden');
-        recBtn.className = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-sm bg-white text-slate-900";
-        insBtn.className = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all text-slate-600 hover:text-slate-900";
+        recBtn.className = activeClass;
+      } else if (tab === 'openalex') {
+        openalexTab.classList.remove('hidden');
+        openalexBtn.className = activeClass;
+        loadFacultyDirectory(currentFacultyPage);
       } else {
-        recTab.classList.add('hidden');
         insTab.classList.remove('hidden');
-        recBtn.className = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all text-slate-600 hover:text-slate-900";
-        insBtn.className = "px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-sm bg-white text-slate-900";
+        insBtn.className = activeClass;
       }
       lucide.createIcons();
     }
@@ -417,17 +499,36 @@
       lucide.createIcons();
     }
 
-    // Render Faculty Result Cards
+    // Render Faculty Result Cards with Dedicated OpenAlex Section
     function renderCards(results) {
       const cardsList = document.getElementById('cards-list');
       cardsList.innerHTML = results.map(rec => {
         const prob = Math.round(rec.score * 100);
         let barColor = 'bg-indigo-600';
-        if (prob >= 80) {
-          barColor = 'bg-emerald-500';
-        } else if (prob >= 70) {
-          barColor = 'bg-blue-500';
-        }
+        if (prob >= 80) barColor = 'bg-emerald-500';
+        else if (prob >= 70) barColor = 'bg-blue-500';
+
+        const openalexLink = rec.openalex_url ? `
+          <a href="${rec.openalex_url}" target="_blank" rel="noopener noreferrer" 
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs sm:text-sm font-bold border border-indigo-200 transition-colors shadow-sm">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+            <span>View Full Works on OpenAlex (Open-Source)</span>
+          </a>
+        ` : '';
+
+        const pastWorksList = (rec.past_publications && rec.past_publications.length > 0) ? `
+          <div class="mt-4 pt-4 border-t border-slate-200/80">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Key Past Publications:</span>
+            <ul class="space-y-1.5 text-xs sm:text-sm text-slate-600">
+              ${rec.past_publications.slice(0, 4).map(p => `
+                <li class="flex items-start gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                  <span>${p}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : '';
 
         return `
           <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-all border border-slate-200/90 space-y-5">
@@ -465,9 +566,143 @@
                 </div>
               `).join('')}
             </div>
+
+            <!-- Dedicated OpenAlex Knowledge & Past Works Section -->
+            <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 mt-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="globe" class="w-4 h-4 text-blue-600"></i>
+                    <span>OpenAlex Open-Source Knowledge Base</span>
+                  </h4>
+                  <p class="text-xs text-slate-500 mt-0.5">Explore verified full publications, co-author network, and citation timelines.</p>
+                </div>
+                ${openalexLink}
+              </div>
+              ${pastWorksList}
+            </div>
+
           </div>
         `;
       }).join('');
+    }
+
+    // OpenAlex Directory Search & Pagination
+    function debounceFacultySearch() {
+      clearTimeout(facultySearchTimeout);
+      facultySearchTimeout = setTimeout(() => {
+        currentFacultyPage = 1;
+        loadFacultyDirectory(1);
+      }, 300);
+    }
+
+    function changeFacultyPage(delta) {
+      currentFacultyPage = Math.max(1, currentFacultyPage + delta);
+      loadFacultyDirectory(currentFacultyPage);
+    }
+
+    async function loadFacultyDirectory(page = 1) {
+      const grid = document.getElementById('faculty-grid');
+      const countEl = document.getElementById('faculty-total-count');
+      const pageIndicator = document.getElementById('page-indicator');
+      const prevBtn = document.getElementById('prev-page-btn');
+      const nextBtn = document.getElementById('next-page-btn');
+      const search = document.getElementById('faculty-search-input').value.trim();
+
+      grid.innerHTML = `
+        <div class="col-span-full text-center py-12 text-slate-400">
+          <i data-lucide="loader" class="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600"></i>
+          <span class="text-sm font-medium">Fetching faculty profiles from OpenAlex index...</span>
+        </div>
+      `;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`/api/faculty?search=${encodeURIComponent(search)}&page=${page}&per_page=10`);
+        const data = await res.json();
+
+        if (data.items && data.items.length > 0) {
+          countEl.innerText = `Showing ${(page - 1) * 10 + 1}–${Math.min(page * 10, data.total)} of ${data.total} faculty researchers`;
+          pageIndicator.innerText = `Page ${page} of ${Math.ceil(data.total / 10) || 1}`;
+          prevBtn.disabled = page <= 1;
+          nextBtn.disabled = page >= Math.ceil(data.total / 10);
+
+          grid.innerHTML = data.items.map(f => `
+            <div class="glass-card rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-md transition-all border border-slate-200 flex flex-col justify-between space-y-4">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 class="text-lg sm:text-xl font-black text-slate-900">${f.name}</h4>
+                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200 inline-block mt-1">${f.faculty_id}</span>
+                  </div>
+                  <a href="${f.openalex_url}" target="_blank" rel="noopener noreferrer"
+                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold border border-blue-200 transition-colors shadow-sm flex-shrink-0"
+                     title="Open profile on OpenAlex">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    <span>OpenAlex Profile</span>
+                  </a>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-4 gap-2 text-center pt-1">
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Papers</span>
+                    <span class="text-sm font-black text-slate-800">${f.n_papers}</span>
+                  </div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Citations</span>
+                    <span class="text-sm font-black text-slate-800">${f.total_citations}</span>
+                  </div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Recent</span>
+                    <span class="text-sm font-black text-slate-800">${f.recent_papers}</span>
+                  </div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Avg Cit</span>
+                    <span class="text-sm font-black text-slate-800">${f.avg_citations}</span>
+                  </div>
+                </div>
+
+                <!-- Topics -->
+                ${f.top_topics.length > 0 ? `
+                  <div class="flex flex-wrap gap-1.5 pt-1">
+                    ${f.top_topics.map(t => `<span class="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100">${t}</span>`).join('')}
+                  </div>
+                ` : ''}
+
+                <!-- Sample Past Publications -->
+                ${f.past_publications.length > 0 ? `
+                  <div class="pt-2 border-t border-slate-100">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Recent Past Works:</span>
+                    <ul class="space-y-1 text-xs text-slate-600">
+                      ${f.past_publications.slice(0, 3).map(p => `
+                        <li class="flex items-start gap-1.5 line-clamp-1">
+                          <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                          <span title="${p}">${p}</span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+        } else {
+          grid.innerHTML = `
+            <div class="col-span-full text-center py-16 text-slate-500">
+              No faculty found matching "<strong>${search}</strong>". Try another keyword.
+            </div>
+          `;
+          countEl.innerText = `0 faculty found`;
+        }
+      } catch (err) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 text-red-600 font-semibold">
+            Error loading faculty directory: ${err.message}
+          </div>
+        `;
+      }
+      lucide.createIcons();
     }
 
     // Render Feature Importances

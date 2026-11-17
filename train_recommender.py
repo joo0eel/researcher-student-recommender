@@ -329,12 +329,24 @@ def recommend_faculty(query_text: str, model=None, top_k: int = 5):
             f"avg {faculty['avg_citations']:.1f} citations"
         )
 
+        papers = [p.strip() for p in str(faculty.get("publications", "")).split(" | ") if p.strip()]
+        openalex_url = str(faculty.get("openalex_id", "")).strip()
+        if openalex_url and not openalex_url.startswith("http"):
+            openalex_url = f"https://openalex.org/{openalex_url}"
+
         recommendations.append(
             {
                 "rank": rank,
                 "faculty_name": faculty["name"],
                 "faculty_id": faculty["faculty_id"],
                 "score": round(float(probs[idx]), 3),
+                "openalex_url": openalex_url,
+                "top_topics": [t.strip() for t in str(faculty.get("top_topics", "")).split(";") if t.strip()][:6],
+                "past_publications": papers[:8],
+                "n_papers": int(faculty["n_papers"]),
+                "total_citations": int(faculty["total_citations"]),
+                "recent_papers": int(faculty["recent_papers"]),
+                "avg_citations": round(float(faculty["avg_citations"]), 1),
                 "reasons": reasons,
             }
         )

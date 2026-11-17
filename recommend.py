@@ -42,8 +42,14 @@ def main():
     for rec in recommendations:
         print(f"Rank #{rec['rank']}: {rec['faculty_name']} ({rec['faculty_id']})")
         print(f"Predicted Collaboration Probability: {rec['score'] * 100:.1f}%")
+        if rec.get("openalex_url"):
+            print(f"OpenAlex Open-Source Profile: {rec['openalex_url']}")
         for reason in rec["reasons"]:
             print(f"   * {reason}")
+        if rec.get("past_publications"):
+            print("   * Key Past Works:")
+            for p in rec["past_publications"][:3]:
+                print(f"     - {p}")
         print("-" * 70)
 
 
